@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fake Betting Site</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f2f4f8;
+      color: #333;
+    }
+    .bet {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      margin-right: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #dbeafe;
+      color: #1e40af;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #bfdbfe;
+    }
+    .context {
+      margin-top: 0.5rem;
+      color: #555;
+      display: none;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 30%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <div id="name-prompt">
+    <h2>Welcome to the Betting Site</h2>
+    <p>Enter your name to continue:</p>
+    <input type="text" id="name-input" placeholder="Your name">
+    <button onclick="enterSite()">Enter</button>
+  </div>
+
+  <div id="site-content" style="display: none;">
+    <h1>Place Your Bets, <span id="username"></span></h1>
+    <div id="bet-list"></div>
+
+  <div class="overlay" onclick="closeModal()"></div>
+  <div class="modal" id="wager-modal">
+    <p>Enter your wager:</p>
+    <input type="text" id="wager-input" placeholder="$ Amount">
+    <button onclick="submitWager()">Submit</button>
+  </div>
+
+  <script>
+    const bets = [
+      { title: "Will the sun explode tomorrow?", context: "Betting on astronomical improbabilities." },
+      { title: "Will Elon Musk tweet something weird today?", context: "Betting on Twitter chaos." },
+      { title: "Will Nolan do 20 pushups?", context: "Betting on personal fitness." }
+    ];
+
+    const betList = document.getElementById("bet-list");
+
+    bets.forEach((bet, i) => {
+      const div = document.createElement("div");
+      div.className = "bet";
+      div.innerHTML = `
+        <strong>${bet.title}</strong><br>
+        <button onclick="toggleContext(${i})">Context</button>
+        <button onclick="openModal('${bet.title}')">Wager</button>
+        <div class="context" id="context-${i}">${bet.context}</div>
+      `;
+      betList.appendChild(div);
+    });
+
+    function toggleContext(i) {
+      const el = document.getElementById(`context-${i}`);
+      el.style.display = el.style.display === "block" ? "none" : "block";
+    }
+
+    function openModal(title) {
+      document.querySelector('.overlay').style.display = 'block';
+      document.getElementById('wager-modal').style.display = 'block';
+      document.getElementById('wager-modal').dataset.betTitle = title;
+    }
+
+    function closeModal() {
+      document.querySelector('.overlay').style.display = 'none';
+      document.getElementById('wager-modal').style.display = 'none';
+    }
+
+    function submitWager() {
+      const amount = document.getElementById("wager-input").value;
+      const title = document.getElementById("wager-modal").dataset.betTitle;
+      alert(`Wagered ${amount} on: "${title}"`);
+      closeModal();
+    }
+    function enterSite() {
+        const name = document.getElementById("name-input").value.trim();
+        if (name) {
+            document.getElementById("name-prompt").style.display = "none";
+            document.getElementById("site-content").style.display = "block";
+            document.getElementById("username").textContent = name;
+        } else {
+            alert("Please enter your name.");
+        }
+    }
+  </script>
+</body>
+</html>
