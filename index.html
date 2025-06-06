@@ -108,7 +108,7 @@
       { title: "Will Nolan cry at the reception?", context: "After all, he's kinda a bitch." },
       { title: "How darts Z? (O/U is 5)", context: "This is about Zach Savas and how many cigarettes he will smoke" },
       { title: "Will anyone laugh during the bagpipes?", context: "Bagpipes will play as Clare walks down the aisle." },
-      { title: "Nolan's dad's speech length (O/U 5 minutes)?", context: "Nolan's dad is Nolan's dad." },
+      { title: "Nolan's dad's speech length (O/U 3 minutes)", context: "Nolan's dad is Nolan's dad." },
     ];
 
     let pendingBet = null;
@@ -133,12 +133,17 @@
         const div = document.createElement("div");
         div.className = "bet";
         div.innerHTML = `
-          <strong>${bet.title}</strong><br>
-          <button onclick="toggleContext(${i})">Context</button>
-          <button onclick="submitVote('${bet.title}', 'Yes')">Yes</button>
-          <button onclick="submitVote('${bet.title}', 'No')">No</button>
-          <div class="context" id="context-${i}">${bet.context}</div>
+        <strong>${bet.title}</strong><br>
+        <button class="yes-btn">Yes</button>
+        <button class="no-btn">No</button>
+        <button class="context-btn">Context</button>
+        <div class="context" id="context-${i}" style="display: none">${bet.context}</div>
         `;
+
+        div.querySelector(".yes-btn").addEventListener("click", () => submitVote(bet.title, "Yes"));
+        div.querySelector(".no-btn").addEventListener("click", () => submitVote(bet.title, "No"));
+        div.querySelector(".context-btn").addEventListener("click", () => toggleContext(i));
+
         betList.appendChild(div);
       });
     }
@@ -153,7 +158,7 @@
       pendingChoice = choice;
 
       document.getElementById("confirm-message").textContent =
-        `You want to vote "${choice}" on "${betTitle}"?`;
+        `You want to vote "${choice}"?`;
 
       document.getElementById("confirm-modal").style.display = "block";
       document.getElementById("confirm-overlay").style.display = "block";
