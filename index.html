@@ -17,7 +17,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     button {
-      margin-right: 0.5rem;
+      margin: 0.5rem 0.5rem 0 0;
       padding: 0.4rem 0.8rem;
       border: none;
       border-radius: 5px;
@@ -34,29 +34,30 @@
       color: #555;
       display: none;
     }
-    .modal {
+    #confirm-modal {
       display: none;
       position: fixed;
-      left: 50%;
       top: 30%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      background: #fff;
-      padding: 1rem;
-      border: 1px solid #ccc;
+      background: white;
+      padding: 1.5rem;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 10;
+      z-index: 100;
     }
-    .overlay {
+    #confirm-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.3);
-      z-index: 5;
+      background: rgba(0,0,0,0.4);
+      z-index: 90;
     }
   </style>
 </head>
 <body>
+
+  <!-- Name entry -->
   <div id="name-prompt">
     <h2>Welcome to the Betting Site</h2>
     <p>Enter your name to continue:</p>
@@ -64,70 +65,131 @@
     <button onclick="enterSite()">Enter</button>
   </div>
 
+  <!-- Betting interface -->
   <div id="site-content" style="display: none;">
     <h1>Place Your Bets, <span id="username"></span></h1>
+    <p>Each bet is $1 because Nolan is the house and anything else could bankrupt him</p>
+    <p>Over/Under bets are yes for over and no for under</p>
     <div id="bet-list"></div>
+  </div>
 
-  <div class="overlay" onclick="closeModal()"></div>
-  <div class="modal" id="wager-modal">
-    <p>Enter your wager:</p>
-    <input type="text" id="wager-input" placeholder="$ Amount">
-    <button onclick="submitWager()">Submit</button>
+  <!-- Confirmation Modal -->
+  <div id="confirm-overlay" onclick="closeConfirm()"></div>
+  <div id="confirm-modal">
+    <p id="confirm-message"></p>
+    <button onclick="confirmVote()">Confirm</button>
+    <button onclick="closeConfirm()">Cancel</button>
   </div>
 
   <script>
+    // Airtable Config
+    const AIRTABLE_BASE_ID = "appZSJ9JV8jRa8F9B"
+    const AIRTABLE_TABLE_NAME = "tbl4Muuwiw5p3cvNO";
+    const AIRTABLE_TOKEN = "patDOMcUE8mJAgIwJ.1e3855ff69ec0214074d5dea22371a8002b2c13200d293a0e7441cf4871f674a";
+
     const bets = [
-      { title: "Will the sun explode tomorrow?", context: "Betting on astronomical improbabilities." },
-      { title: "Will Elon Musk tweet something weird today?", context: "Betting on Twitter chaos." },
-      { title: "Will Nolan do 20 pushups?", context: "Betting on personal fitness." }
+      { title: "Will Clare cry at the ceremony?", context: "Clare is the bride, you should know that." },
+      { title: "Will Nolan cry at the ceremony?", context: "After all, he's kinda a bitch." },
+      { title: "Will Clare cry at the reception?", context: "Clare is the bride, you should know that." },
+      { title: "Will Nolan cry at the reception?", context: "After all, he's kinda a bitch." },
+      { title: "How darts Z? (O/U is 5)", context: "This is about Zach Savas and how many cigarettes he will smoke" },
+      { title: "Will anyone laugh during the bagpipes?", context: "Bagpipes will play as Clare walks down the aisle." },
+      { title: "Nolan's dad's speech lenght (O/U 5 minutes)?", context: "Nolan's dad is Nolan's dad." },
+      { title: "Nolan's dad's speech lenght (O/U 5 minutes)?", context: "Nolan's dad is Nolan's dad." },
     ];
 
-    const betList = document.getElementById("bet-list");
+    let pendingBet = null;
+    let pendingChoice = null;
 
-    bets.forEach((bet, i) => {
-      const div = document.createElement("div");
-      div.className = "bet";
-      div.innerHTML = `
-        <strong>${bet.title}</strong><br>
-        <button onclick="toggleContext(${i})">Context</button>
-        <button onclick="openModal('${bet.title}')">Wager</button>
-        <div class="context" id="context-${i}">${bet.context}</div>
-      `;
-      betList.appendChild(div);
-    });
+    function enterSite() {
+      const name = document.getElementById("name-input").value.trim();
+      if (name) {
+        document.getElementById("name-prompt").style.display = "none";
+        document.getElementById("site-content").style.display = "block";
+        document.getElementById("username").textContent = name;
+        renderBets();
+      } else {
+        alert("Please enter your name.");
+      }
+    }
+
+    function renderBets() {
+      const betList = document.getElementById("bet-list");
+      betList.innerHTML = "";
+      bets.forEach((bet, i) => {
+        const div = document.createElement("div");
+        div.className = "bet";
+        div.innerHTML = `
+          <strong>${bet.title}</strong><br>
+          <button onclick="toggleContext(${i})">Context</button>
+          <button onclick="submitVote('${bet.title}', 'Yes')">Yes</button>
+          <button onclick="submitVote('${bet.title}', 'No')">No</button>
+          <div class="context" id="context-${i}">${bet.context}</div>
+        `;
+        betList.appendChild(div);
+      });
+    }
 
     function toggleContext(i) {
       const el = document.getElementById(`context-${i}`);
       el.style.display = el.style.display === "block" ? "none" : "block";
     }
 
-    function openModal(title) {
-      document.querySelector('.overlay').style.display = 'block';
-      document.getElementById('wager-modal').style.display = 'block';
-      document.getElementById('wager-modal').dataset.betTitle = title;
+    function submitVote(betTitle, choice) {
+      pendingBet = betTitle;
+      pendingChoice = choice;
+
+      document.getElementById("confirm-message").textContent =
+        `You want to vote "${choice}" on "${betTitle}"?`;
+
+      document.getElementById("confirm-modal").style.display = "block";
+      document.getElementById("confirm-overlay").style.display = "block";
     }
 
-    function closeModal() {
-      document.querySelector('.overlay').style.display = 'none';
-      document.getElementById('wager-modal').style.display = 'none';
+    function closeConfirm() {
+      pendingBet = null;
+      pendingChoice = null;
+      document.getElementById("confirm-modal").style.display = "none";
+      document.getElementById("confirm-overlay").style.display = "none";
     }
 
-    function submitWager() {
-      const amount = document.getElementById("wager-input").value;
-      const title = document.getElementById("wager-modal").dataset.betTitle;
-      alert(`Wagered ${amount} on: "${title}"`);
-      closeModal();
-    }
-    function enterSite() {
-        const name = document.getElementById("name-input").value.trim();
-        if (name) {
-            document.getElementById("name-prompt").style.display = "none";
-            document.getElementById("site-content").style.display = "block";
-            document.getElementById("username").textContent = name;
-        } else {
-            alert("Please enter your name.");
-        }
+    function confirmVote() {
+      const userName = document.getElementById("username").textContent;
+
+      const payload = {
+        records: [
+          {
+            fields: {
+              Name: userName,
+              Bet: pendingBet,
+              "Yes/No": pendingChoice
+            }
+          }
+        ]
+      };
+
+      fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to submit vote");
+        return res.json();
+      })
+      .then(data => {
+        alert(`You voted "${pendingChoice}" on "${pendingBet}"`);
+        closeConfirm();
+      })
+      .catch(err => {
+        alert("Error: " + err.message);
+        closeConfirm();
+      });
     }
   </script>
+
 </body>
 </html>
