@@ -85,7 +85,7 @@
     <h3>Each bet is $1 because Nolan is the house and anything else could bankrupt him</h3>
     <p>Over/Under bets are "Yes" for over and "No" for under</p>
     <button
-      onclick="location.href = window.location.origin + '/bets.html';"
+      onclick="location.href=window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/bets.html');"
       id="myButton"
       class="float-left submit-button"
       style="margin-bottom: 1rem;"
@@ -145,12 +145,6 @@
 
     let pendingBet = null;
     let pendingChoice = null;
-
-    function goToHistory() {
-      console.log("windwo")
-      console.log(window.location.origin);
-      // location.href = `${window.location.origin}/bets.html`;
-    }
 
     function enterSite() {
       const name = document.getElementById("name-input").value.trim();
