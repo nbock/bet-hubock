@@ -84,6 +84,14 @@
     <h1>Place Your Bets, <span id="username"></span></h1>
     <h3>Each bet is $1 because Nolan is the house and anything else could bankrupt him</h3>
     <p>Over/Under bets are "Yes" for over and "No" for under</p>
+    <button
+      onclick="location.href = window.location.origin + '/bets.html';"
+      id="myButton"
+      class="float-left submit-button"
+      style="margin-bottom: 1rem;"
+    >
+      Show Bet History
+    </button>
     <div id="bet-list"></div>
   </div>
 
@@ -106,7 +114,7 @@
       { title: "Will Nolan cry at the ceremony?", context: "We can think of crying in two ways: as an emotional expression, with or without feelings (for example, of sadness, distress, or pain), or as a communicative signal (for example, of vigorous health of babies, or with communicative intent to invite caregiving and/or solace)." },
       { title: "Will Clare cry at the reception?", context: "Clare is the bride, you should know that." },
       { title: "Will Nolan cry at the reception?", context: "We can think of crying in two ways: as an emotional expression, with or without feelings (for example, of sadness, distress, or pain), or as a communicative signal (for example, of vigorous health of babies, or with communicative intent to invite caregiving and/or solace)." },
-      { title: "How darts Z? (O/U is 5)", context: "This is about Zach Savas and how many cigarettes he will smoke. The last betting site I made I did while I was drunk so instead of typing 'How many darts with Zach smoke?' I typed 'How darts Z?' and now it's kinda lore." },
+      { title: "How darts Z? (O/U is 5)", context: "This is about Zach Savas and how many cigarettes he will smoke. The last betting site I made I did while I was drunk so instead of typing 'How many darts will Zach smoke?' I typed 'How darts Z?' and now it's kinda lore." },
       { title: "Will anyone laugh during the bagpipes?", context: "Bagpipes will play as Clare walks down the aisle." },
       { title: "Nolan's dad's speech length (O/U 3 minutes)", context: "Nolan's dad is Nolan's dad." },
       { title: "Will Michigan football be mentioned during the ceremony or speeches?", context: "Clare is too into Michigan football." },
@@ -120,10 +128,29 @@
       { title: "Will there be broken glass on the dance floor?", context: "Too much party would yield this." },
       { title: "Will Michigan's fight song be played?", context: "Hail to the Victors!" },
       { title: "Do any parents mention grandchildren in speeches?", context: "Grandchildren are the children of our children." },
+      { title: "Will E. Coli be mentioned during the wedding?", context: `Pullin' up in that new toy \\
+                                                                          The wrist on that boy rockstar like Pink Floyd \\
+                                                                          waving at rude boy, I'm wavin' at you, boy \\
+                                                                          Ran off on the plug too like Trugoy \\
+                                                                          Imagine me do-boy, you could never do what I do, boy \\
+                                                                          Still, duckin' shit that I did, boy \\
+                                                                          Nolan in Paris 'fore Hit-Boy \\
+                                                                          These ain't the same type of hits, boy \\
+                                                                          Shit can get litter than lit, boy \\
+                                                                          You don't take these type of risks, boy \\
+                                                                          'Cause this boy been throwin' that D like Rich Boy \\
+                                                                          You missed, boy; ya numbers don't add up on the blow \\
+                                                                          That was ten years ago – IF YOU KNOW, YOU KNOW.` },
     ];
 
     let pendingBet = null;
     let pendingChoice = null;
+
+    function goToHistory() {
+      console.log("windwo")
+      console.log(window.location.origin);
+      // location.href = `${window.location.origin}/bets.html`;
+    }
 
     function enterSite() {
       const name = document.getElementById("name-input").value.trim();
