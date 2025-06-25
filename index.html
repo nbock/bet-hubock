@@ -1,244 +1,273 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bet HuBock</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background: #f2f4f8;
-      color: #333;
-    }
-    .bet {
-      background: #fff;
-      border-radius: 10px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    button {
-      margin: 0.5rem 0.5rem 0 0;
-      padding: 0.4rem 0.8rem;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      background-color: #dbeafe;
-      color: #1e40af;
-      font-weight: bold;
-    }
-    button:hover {
-      background-color: #bfdbfe;
-    }
-    .context {
-      margin-top: 0.5rem;
-      color: #555;
-      display: none;
-    }
-    #confirm-modal {
-      display: none;
-      position: fixed;
-      top: 30%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 100;
-    }
-    #confirm-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 90;
-    }
-    @media (max-width: 600px) {
-        body {
-            padding: 1rem;
-        }
-        .bet {
-            font-size: 1rem;
-        }
-        button {
-            display: block;
-            margin: 0.5rem 0;
-            width: 100%;
-        }
-    }
-  </style>
+<title>Bet HuBock</title>
+<style>
+  /* ... (your existing CSS remains the same) ... */
+  /* Basic Body Styling */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    background-color: #f4f7f6;
+    color: #333;
+  }
+
+  h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  /* Table Container Styling */
+  #csvTableContainer {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+  }
+
+  /* Table Styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+
+  /* Table Header Styling */
+  th {
+    background-color: #3498db;
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #2980b9;
+    white-space: nowrap;
+    cursor: pointer; /* Indicate that headers are clickable */
+    position: relative; /* For sort indicator positioning */
+  }
+
+  th:hover {
+    background-color: #2980b9; /* Slightly darker on hover */
+  }
+
+  /* Sort indicator arrow styling */
+  th .sort-indicator {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8em;
+  }
+
+
+  /* Table Data Cell Styling */
+  td {
+    padding: 10px 15px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+  }
+
+  /* Striped Rows */
+  tr:nth-child(even) {
+    background-color: #f8f8f8;
+  }
+
+  /* Hover Effect for Rows */
+  tr:hover {
+    background-color: #eef7fc;
+    cursor: pointer;
+  }
+
+  /* Styling for the loading/error message */
+  #csvTableContainer p {
+    font-style: italic;
+    color: #555;
+    text-align: center;
+  }
+
+  /* Conditional Character Color */
+  .highlight-number {
+    display: inline-block;
+    font-weight: bold;
+  }
+
+  .highlight-negative-num {
+    color: #cc0000;
+  }
+  .highlight-zero-num {
+    color: #8B8000;
+  }
+  .highlight-positive-num {
+    color: #006600;
+  }
+</style>
 </head>
 <body>
 
-  <!-- Name entry -->
-  <div id="name-prompt">
-    <h2>Bets are locked! I'll update after the honeymoon!</h2>
-    <!-- <p>Enter your name to continue:</p>
-    <input type="text" id="name-input" placeholder="Your name">
-    <button onclick="enterSite()">Enter</button> -->
-  </div>
+<h1>HuBock Bets Results!</h1>
 
-  <!-- Betting interface -->
-  <div id="site-content" style="display: none;">
-    <h1>Place Your Bets, <span id="username"></span></h1>
-    <h3>Each bet is $1 because Nolan is the house and anything else could bankrupt him</h3>
-    <p>Over/Under bets are "Yes" for over and "No" for under</p>
-    <button
-      onclick="location.href=window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/bets.html');"
-      id="myButton"
-      class="float-left submit-button"
-      style="margin-bottom: 1rem;"
-    >
-      Show Bet History
-    </button>
-    <div id="bet-list"></div>
-  </div>
+<div id="csvTableContainer">
+  Loading CSV data...
+</div>
 
-  <!-- Confirmation Modal -->
-  <div id="confirm-overlay" onclick="closeConfirm()"></div>
-  <div id="confirm-modal">
-    <p id="confirm-message"></p>
-    <button onclick="confirmVote()">Confirm</button>
-    <button onclick="closeConfirm()">Cancel</button>
-  </div>
+<script>
+    // Global variables to store the data and current sort state
+    let globalHeaders = [];
+    let globalData = [];
+    let currentSortColumnIndex = -1; // -1 means no column is currently sorted
+    let currentSortDirection = 'asc'; // 'asc' for ascending, 'desc' for descending
 
-  <script>
-    // Airtable Config
-    const AIRTABLE_BASE_ID = "appZSJ9JV8jRa8F9B"
-    const AIRTABLE_TABLE_NAME = "tbl4Muuwiw5p3cvNO";
-    const AIRTABLE_TOKEN = "patDOMcUE8mJAgIwJ.1e3855ff69ec0214074d5dea22371a8002b2c13200d293a0e7441cf4871f674a";
+    // --- Core Function to Render (or Re-render) the Table ---
+    function renderTable(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-    const bets = [
-      { title: "Will Clare cry at the ceremony?", context: "Clare is the bride, you should know that." },
-      { title: "Will Nolan cry at the ceremony?", context: "We can think of crying in two ways: as an emotional expression, with or without feelings (for example, of sadness, distress, or pain), or as a communicative signal (for example, of vigorous health of babies, or with communicative intent to invite caregiving and/or solace)." },
-      { title: "Will Clare cry at the reception?", context: "Clare is the bride, you should know that." },
-      { title: "Will Nolan cry at the reception?", context: "We can think of crying in two ways: as an emotional expression, with or without feelings (for example, of sadness, distress, or pain), or as a communicative signal (for example, of vigorous health of babies, or with communicative intent to invite caregiving and/or solace)." },
-      { title: "How darts Z? (O/U is 5)", context: "This is about Zach Savas and how many cigarettes he will smoke. The last betting site I made I did while I was drunk so instead of typing 'How many darts will Zach smoke?' I typed 'How darts Z?' and now it's kinda lore." },
-      { title: "Will anyone laugh during the bagpipes?", context: "Bagpipes will play as Clare walks down the aisle." },
-      { title: "Nolan's dad's speech length (O/U 3 minutes)", context: "Nolan's dad is Nolan's dad." },
-      { title: "Will Michigan football be mentioned during the ceremony or speeches?", context: "Clare is too into Michigan football." },
-      { title: "How many times will Mr. Brightside be played? (O/U 2)", context: "It's a song by the Killers about infidelity (maybe? I don't listen to the lyrics that often)." },
-      { title: "How quickly will Nolan's tie come off? (O/U 30 minutes into reception)", context: "I don't like ties that much, but they're important for tuxedos." },
-      { title: "Will JJ McCarthy be mentioned during the ceremony or speeches?", context: "Nolan loves JJ." },
-      { title: "How long will the first kiss last? (O/U 3 seconds)", context: "In primates, kissing got its start as a fur grooming ritual still observed in modern-day chimpanzees and other great apes." },
-      { title: "Will Clare change outfits", context: "For comfort." },
-      { title: "Will anyone attempt the worm?", context: "Nolan can do it probably." },
-      { title: "Will Clare crowd surf?", context: "The chair toss up thing counts." },
-      { title: "Will there be broken glass on the dance floor?", context: "Too much party would yield this." },
-      { title: "Will Michigan's fight song be played?", context: "Hail to the Victors!" },
-      { title: "Do any parents mention grandchildren in speeches?", context: "Grandchildren are the children of our children." },
-      { title: "Will E. Coli be mentioned during the wedding?", context: `Pullin' up in that new toy \\
-                                                                          The wrist on that boy rockstar like Pink Floyd \\
-                                                                          waving at rude boy, I'm wavin' at you, boy \\
-                                                                          Ran off on the plug too like Trugoy \\
-                                                                          Imagine me do-boy, you could never do what I do, boy \\
-                                                                          Still, duckin' shit that I did, boy \\
-                                                                          Nolan in Paris 'fore Hit-Boy \\
-                                                                          These ain't the same type of hits, boy \\
-                                                                          Shit can get litter than lit, boy \\
-                                                                          You don't take these type of risks, boy \\
-                                                                          'Cause this boy been throwin' that D like Rich Boy \\
-                                                                          You missed, boy; ya numbers don't add up on the blow \\
-                                                                          That was ten years ago – IF YOU KNOW, YOU KNOW.` },
-    ];
-
-    let pendingBet = null;
-    let pendingChoice = null;
-
-    function enterSite() {
-      const name = document.getElementById("name-input").value.trim();
-      if (name) {
-        document.getElementById("name-prompt").style.display = "none";
-        document.getElementById("site-content").style.display = "block";
-        document.getElementById("username").textContent = name;
-        renderBets();
-      } else {
-        alert("Please enter your name.");
-      }
-    }
-
-    function renderBets() {
-      const betList = document.getElementById("bet-list");
-      betList.innerHTML = "";
-      bets.forEach((bet, i) => {
-        const div = document.createElement("div");
-        div.className = "bet";
-        div.innerHTML = `
-        <strong>${bet.title}</strong><br>
-        <button class="yes-btn">Yes</button>
-        <button class="no-btn">No</button>
-        <button class="context-btn">Context</button>
-        <div class="context" id="context-${i}" style="display: none">${bet.context}</div>
-        `;
-
-        div.querySelector(".yes-btn").addEventListener("click", () => submitVote(bet.title, "Yes"));
-        div.querySelector(".no-btn").addEventListener("click", () => submitVote(bet.title, "No"));
-        div.querySelector(".context-btn").addEventListener("click", () => toggleContext(i));
-
-        betList.appendChild(div);
-      });
-    }
-
-    function toggleContext(i) {
-      const el = document.getElementById(`context-${i}`);
-      el.style.display = el.style.display === "block" ? "none" : "block";
-    }
-
-    function submitVote(betTitle, choice) {
-      pendingBet = betTitle;
-      pendingChoice = choice;
-
-      document.getElementById("confirm-message").textContent =
-        `You want to vote "${choice}"?`;
-
-      document.getElementById("confirm-modal").style.display = "block";
-      document.getElementById("confirm-overlay").style.display = "block";
-    }
-
-    function closeConfirm() {
-      pendingBet = null;
-      pendingChoice = null;
-      document.getElementById("confirm-modal").style.display = "none";
-      document.getElementById("confirm-overlay").style.display = "none";
-    }
-
-    function confirmVote() {
-      const userName = document.getElementById("username").textContent;
-
-      const payload = {
-        records: [
-          {
-            fields: {
-              Name: userName,
-              Bet: pendingBet,
-              "Yes/No": pendingChoice
+        let tableHtml = '<table><thead><tr>';
+        globalHeaders.forEach((header, index) => {
+            tableHtml += `<th data-column-index="${index}">${header.trim()}`;
+            if (index === currentSortColumnIndex) {
+                tableHtml += `<span class="sort-indicator">${currentSortDirection === 'asc' ? ' &#9650;' : ' &#9660;'}</span>`;
             }
-          }
-        ]
-      };
+            tableHtml += '</th>';
+        });
+        tableHtml += '</tr></thead><tbody>';
 
-      fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to submit vote");
-        return res.json();
-      })
-      .then(data => {
-        closeConfirm();
-      })
-      .catch(err => {
-        alert("Error: " + err.message);
-        closeConfirm();
-      });
+        globalData.forEach(row => {
+            tableHtml += '<tr>';
+            row.forEach(cell => {
+                tableHtml += `<td>${cell.trim()}</td>`;
+            });
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+
+        container.innerHTML = tableHtml;
+
+        const headers = container.querySelectorAll('th');
+        headers.forEach(th => {
+            th.addEventListener('click', () => {
+                const columnIndex = parseInt(th.dataset.columnIndex);
+                sortByColumn(columnIndex, containerId);
+            });
+        });
+
+        applyHighlightsAndCentering(container);
     }
-  </script>
+
+    // --- Helper function to get cell value for sorting (handles numbers vs strings) ---
+    function getSortableCellValue(value) {
+        const num = parseFloat(value.replace(/[^0-9.-]/g, ''));
+        return isNaN(num) ? value.toLowerCase() : num;
+    }
+
+    // --- Function to Handle Sorting Logic ---
+    function sortByColumn(columnIndex, containerId) {
+
+        if (columnIndex === currentSortColumnIndex) {
+            currentSortDirection = (currentSortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            currentSortColumnIndex = columnIndex;
+            currentSortDirection = 'desc'; // Default to DESCENDING first
+        }
+
+        let sortType = 'string';
+        for(let i = 0; i < globalData.length; i++) {
+            const cellVal = globalData[i][columnIndex];
+            if (cellVal.trim() !== '') {
+                if (!isNaN(parseFloat(cellVal.replace(/[^0-9.-]/g, '')))) {
+                    sortType = 'number';
+                }
+                break;
+            }
+        }
+
+        globalData.sort((rowA, rowB) => {
+            const valA = getSortableCellValue(rowA[columnIndex]);
+            const valB = getSortableCellValue(rowB[columnIndex]);
+
+            if (sortType === 'number') {
+                return currentSortDirection === 'asc' ? valA - valB : valB - valA;
+            } else {
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            }
+        });
+
+        renderTable(containerId);
+    }
+
+    // --- Function to Apply Conditional Highlighting and Centering ---
+    function applyHighlightsAndCentering(container) {
+        const table = container.querySelector('table');
+        if (!table) return;
+
+        const headerCells = Array.from(table.querySelector('thead tr').children);
+        const earningsColumnIndex = headerCells.findIndex(th => th.textContent.trim().toLowerCase().includes('earnings')); 
+        
+        if (earningsColumnIndex !== -1) {
+            const tbodyRows = table.querySelector('tbody').children;
+            for (let i = 0; i < tbodyRows.length; i++) {
+                const row = tbodyRows[i];
+                const earningsCell = row.children[earningsColumnIndex];
+
+                if (earningsCell) {
+                    const originalText = earningsCell.textContent.trim();
+                    const value = parseFloat(originalText.replace(/[^0-9.-]/g, ''));
+
+                    const span = document.createElement('span');
+                    span.textContent = originalText;
+                    span.classList.add('highlight-number');
+
+                    if (!isNaN(value)) {
+                        if (value < 0) {
+                            span.classList.add('highlight-negative-num');
+                        } else if (value === 0) {
+                            span.classList.add('highlight-zero-num');
+                        } else {
+                            span.classList.add('highlight-positive-num');
+                        }
+                    }
+
+                    earningsCell.innerHTML = '';
+                    earningsCell.appendChild(span);
+                    earningsCell.style.textAlign = 'center';
+                }
+            }
+        } else {
+            console.warn("No column with 'earnings' in its header found. Character color change and centering skipped.");
+        }
+    }
+
+    // --- Initial CSV Loading Function ---
+    async function loadCsvIntoTable(csvFilePath, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        try {
+            const response = await fetch(csvFilePath);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const csvText = await response.text();
+
+            const rows = csvText.trim().split('\n');
+            globalHeaders = rows[0].split(',').map(h => h.trim());
+            globalData = rows.slice(1).map(row => row.split(',').map(cell => cell.trim()));
+
+            renderTable(containerId);
+
+        } catch (error) {
+            console.error('Error loading or parsing CSV:', error);
+            container.innerHTML = `<p style="color: red;">Failed to load CSV: ${error.message}. Make sure you are serving this page with a web server.</p>`;
+        }
+    }
+
+    // --- Execute on page load ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCsvIntoTable('data.csv', 'csvTableContainer');
+    });
+</script>
 
 </body>
 </html>
